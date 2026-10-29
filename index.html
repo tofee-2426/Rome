@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Интерактивная карта Древнего Рима</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eceae4;--card:#fbfaf7;--ink:#26231f;--mut:#5f5a51;--line:#cfc9bb;--land:#e2ddd0;--hill:#cdc4a8;--water:#8db0c8;--bld:#b9a77c;--wall:#8a2f2f;--pc:#9a6a2f;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1b1d20;--card:#25282c;--ink:#ece8df;--mut:#a9a498;--line:#3b3f44;--land:#2b2e2c;--hill:#46432f;--water:#35566d;--bld:#6e633f;--wall:#d0645f}}
+:root[data-theme="dark"]{--bg:#1b1d20;--card:#25282c;--ink:#ece8df;--mut:#a9a498;--line:#3b3f44;--land:#2b2e2c;--hill:#46432f;--water:#35566d;--bld:#6e633f;--wall:#d0645f}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:1120px;margin:0 auto;padding:20px 16px 32px}
+h1{font-family:"Cormorant Garamond",Georgia,serif;font-weight:700;font-size:clamp(30px,6vw,52px);line-height:1.05;margin:0 0 6px;letter-spacing:.2px}
+.sub{margin:0 0 10px;color:var(--mut);max-width:60ch}
+.by{display:inline-block;margin:0 0 16px;padding:5px 12px;border:1px solid var(--line);border-left:4px solid var(--pc);border-radius:4px 10px 10px 4px;background:var(--card);font-size:14px}
+.by b{font-weight:600}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.tab{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-bottom:5px solid var(--tc);border-radius:10px 10px 4px 4px;padding:10px 12px;text-align:left;cursor:pointer}
+.tab b{display:block;font-size:15px}
+.tab span{font-size:13px;color:var(--mut)}
+.tab[aria-selected="true"]{background:var(--tc);border-color:var(--tc);color:#fff}
+.tab[aria-selected="true"] span{color:#fff;opacity:.9}
+.grid{display:grid;grid-template-columns:1fr 340px;gap:16px;align-items:start}
+.mapbox{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--land)}
+svg{display:block;min-width:660px;width:100%;height:auto}
+.lb{font-size:12px;fill:var(--mut);text-anchor:middle;pointer-events:none}
+.lb.big{font-size:14px;font-style:italic}
+.hill{fill:var(--hill);stroke:var(--bld);stroke-width:1.5}
+.ct,.ln{fill:none;stroke:var(--bld);stroke-width:1;opacity:.85}
+.ln{stroke:var(--mut);stroke-width:1.5;opacity:.7}
+.rd{fill:none;stroke:var(--bld);stroke-width:3;stroke-dasharray:2 6;stroke-linecap:round}
+.tr{fill:none;stroke:#6f9a64;stroke-linecap:round;opacity:.6}
+.s2{transition:opacity .4s}
+.p0 .s2,.p1 .s2{opacity:.14}
+.bld{fill:var(--bld);opacity:.55}
+#wall{fill:none;stroke:var(--wall);stroke-width:5;stroke-dasharray:14 8;opacity:0;transition:opacity .4s}
+.p2 #wall{opacity:1}
+.mk{cursor:pointer;outline:none}
+.mk circle.bg{fill:var(--card);stroke:var(--pc);stroke-width:3}
+.mk .in{transform-box:fill-box;transform-origin:center;transition:transform .15s}
+.mk:hover .in,.mk:focus-visible .in{transform:scale(1.15)}
+.mk:focus-visible circle.bg{stroke:var(--ink);stroke-width:4}
+.mk.sel circle.bg{fill:var(--pc)}
+.mk .ring{fill:none;stroke:var(--pc);stroke-width:2;animation:pl 2.4s ease-out infinite}
+.mk.sel .ring{animation:none;opacity:0}
+@keyframes pl{from{r:24;opacity:.8}to{r:36;opacity:0}}
+.mk text{font-size:22px;text-anchor:middle;pointer-events:none}
+.panel{background:var(--card);border:1px solid var(--line);border-top:6px solid var(--pc);border-radius:6px 6px 14px 14px;padding:18px 18px 16px;min-height:300px}
+.panel h2{font-family:"Cormorant Garamond",Georgia,serif;font-size:28px;line-height:1.1;margin:4px 0 6px}
+.yr{display:inline-block;font-weight:600;color:var(--pc);font-size:15px}
+.ico{font-size:34px;line-height:1}
+.fact{margin:14px 0 0;padding:10px 12px;border-left:4px solid var(--pc);background:var(--bg);border-radius:0 8px 8px 0;font-size:15px}
+.nav{display:flex;gap:8px;justify-content:space-between;align-items:center;margin-top:16px}
+.btn{font:inherit;font-size:14px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 12px;cursor:pointer}
+.btn:disabled{opacity:.4;cursor:default}
+.btn.pri{background:var(--pc);border-color:var(--pc);color:#fff}
+.cnt{font-size:13px;color:var(--mut)}
+.hint{color:var(--mut);font-size:15px}
+button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+@media (max-width:860px){.grid{grid-template-columns:1fr}.panel{min-height:0}.tab{padding:8px}.tab span{font-size:12px}}
+@media (prefers-reduced-motion:reduce){.mk .ring{animation:none;opacity:0}*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Карта Древнего Рима</h1>
+  <p class="sub">Выбери эпоху и нажимай на значки на карте — узнаешь, что и где происходило. Здания, которых ещё нет, на карте бледные.</p>
+  <p class="by">Карту подготовила <b>Бушуева Ульяна</b></p>
+  <div class="tabs" id="tabs" role="tablist" aria-label="Эпохи"></div>
+  <div class="grid">
+    <div class="mapbox">
+      <svg id="map" viewBox="0 0 800 600" role="group" aria-label="Схема Древнего Рима">
+        <defs><pattern id="tx" width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(35)"><line x1="0" y1="0" x2="0" y2="12" stroke="var(--line)" stroke-width="1" opacity=".4"/></pattern></defs>
+        <rect width="800" height="600" fill="url(#tx)"/>
+        <path d="M300 -10 C180 80 140 190 230 270 C300 330 290 450 190 610" fill="none" stroke="var(--water)" stroke-width="34" stroke-linecap="round"/>
+        <path d="M300 -10 C180 80 140 190 230 270 C300 330 290 450 190 610" fill="none" stroke="var(--card)" stroke-width="2" stroke-dasharray="3 12" opacity=".5"/>
+        <ellipse cx="267" cy="325" rx="20" ry="8" transform="rotate(70 267 325)" fill="var(--land)" stroke="var(--bld)" stroke-width="1.5"/>
+        <g stroke="var(--bld)" stroke-width="6" stroke-linecap="round"><path d="M168 214H204"/><path d="M247 326H287"/><path d="M243 446H281"/></g>
+        <text class="lb" x="236" y="352" style="text-anchor:end">Тибрский остров</text>
+        <text class="lb big" x="180" y="258" style="text-anchor:end">Тибр</text>
+        <text class="lb big" x="400" y="135">Марсово поле</text>
+        <polygon id="wall" points="245,30 640,45 770,190 775,400 650,560 400,592"/>
+        <ellipse class="hill" cx="310" cy="268" rx="34" ry="26"/><text class="lb" x="306" y="308">Капитолий</text>
+        <ellipse class="hill" cx="410" cy="385" rx="52" ry="40"/><text class="lb" x="410" y="432">Палатин</text>
+        <ellipse class="hill" cx="300" cy="485" rx="38" ry="28"/><text class="lb" x="300" y="528">Авентин</text>
+        <ellipse class="hill" cx="470" cy="205" rx="38" ry="24"/><text class="lb" x="478" y="246">Квиринал</text>
+        <ellipse class="hill" cx="545" cy="228" rx="30" ry="20"/><text class="lb" x="548" y="262">Виминал</text>
+        <ellipse class="hill" cx="600" cy="305" rx="40" ry="28"/><text class="lb" x="600" y="352">Эсквилин</text>
+        <ellipse class="hill" cx="565" cy="425" rx="38" ry="26"/><text class="lb" x="565" y="468">Целий</text>
+        <rect class="bld" x="345" y="300" width="60" height="36" rx="4"/><path class="ln" d="M349 306h52M349 330h52" style="stroke-width:3;stroke-dasharray:1 5;stroke-linecap:round"/><text class="lb" x="375" y="292">Форум</text>
+        <g class="s2"><ellipse class="bld" cx="515" cy="345" rx="30" ry="22"/><ellipse class="ln" cx="515" cy="345" rx="23" ry="16" stroke-dasharray="2 3"/><ellipse class="ln" cx="515" cy="345" rx="13" ry="9" style="fill:var(--land)"/><text class="lb" x="515" y="384">Колизей</text></g>
+        <ellipse class="bld" cx="430" cy="468" rx="62" ry="17"/><ellipse class="ln" cx="430" cy="468" rx="50" ry="11"/><path class="ln" d="M395 468H465" style="stroke-width:3"/><text class="lb" x="430" y="504">Большой цирк</text>
+        <g class="s2"><circle class="bld" cx="300" cy="170" r="12"/><circle cx="300" cy="170" r="4" style="fill:var(--land)"/><rect class="ln" x="292" y="182" width="16" height="6"/><text class="lb" x="300" y="212">Пантеон</text></g>
+        <g class="s2"><rect class="bld" x="450" y="515" width="60" height="32" rx="4"/><rect class="ln" x="458" y="521" width="44" height="20" rx="2"/><circle class="ln" cx="480" cy="531" r="6"/><text class="lb" x="480" y="570">Термы Каракаллы</text></g>
+        <path d="M510 535 L800 520" stroke="var(--bld)" stroke-width="6" stroke-dasharray="3 6" fill="none"/>
+        <text class="lb" x="680" y="574">Аппиева дорога</text>
+        <g class="ct"><ellipse cx="310" cy="268" rx="24" ry="18"/><ellipse cx="410" cy="385" rx="38" ry="28"/><ellipse cx="410" cy="385" rx="22" ry="15"/><ellipse cx="300" cy="485" rx="27" ry="19"/><ellipse cx="470" cy="205" rx="27" ry="16"/><ellipse cx="545" cy="228" rx="20" ry="12"/><ellipse cx="600" cy="305" rx="28" ry="18"/><ellipse cx="565" cy="425" rx="26" ry="16"/></g>
+        <path class="rd" d="M345 318 C400 322 450 330 490 342"/>
+        <path class="rd" d="M300 188 L352 100 L380 -5"/>
+        <path class="rd" d="M300 513 L330 560 L345 605"/>
+        <text class="lb" x="392" y="20" style="text-anchor:start">Фламиниева дорога</text>
+        <text class="lb" x="336" y="596" style="text-anchor:end">дорога в Остию</text>
+        <path class="tr" stroke-width="9" d="M335 84h.1M395 80h.1M380 104h.1M350 114h.1M425 98h.1M445 72h.1M440 116h.1M470 92h.1M505 72h.1M525 112h.1M565 102h.1M605 142h.1M635 172h.1M655 332h.1M672 352h.1M642 382h.1M692 402h.1M702 252h.1M722 272h.1M662 122h.1M692 142h.1M565 505h.1M605 525h.1M585 550h.1M625 500h.1"/>
+        <path class="tr" stroke-width="6" d="M348 70h.1M412 90h.1M458 105h.1M488 84h.1M548 90h.1M618 160h.1M668 366h.1M710 262h.1M676 132h.1M580 520h.1M612 538h.1"/>
+        <rect x="4" y="4" width="792" height="592" fill="none" stroke="var(--bld)" stroke-width="3"/>
+        <g><rect x="14" y="14" width="190" height="66" rx="6" fill="var(--card)" stroke="var(--bld)" stroke-width="2"/><text x="109" y="39" style="font:700 21px 'Cormorant Garamond',Georgia,serif;fill:var(--ink);text-anchor:middle">Древний Рим</text><text class="lb" x="109" y="56">Карту подготовила</text><text x="109" y="72" style="font:600 13px system-ui,sans-serif;fill:var(--ink);text-anchor:middle">Бушуева Ульяна</text></g>
+        <g transform="translate(745,64)"><circle r="24" fill="var(--card)" stroke="var(--bld)" stroke-width="2"/><path d="M0-18L6 0H-6Z" fill="var(--wall)"/><path d="M0 18L6 0H-6Z" fill="var(--bld)"/><text class="lb" y="-29">С</text></g>
+        <g id="mk"></g>
+      </svg>
+    </div>
+    <aside class="panel" id="panel" aria-live="polite"></aside>
+  </div>
+</div>
+<script>
+var P=[
+{n:"Царский период",y:"753–509 до н.э.",c:"#9a6a2f",d:"Рим — небольшой город на холмах у реки Тибр. Им правят цари."},
+{n:"Республика",y:"509–27 до н.э.",c:"#2f7a55",d:"Царей больше нет. Город управляют выборные чиновники и Сенат. Рим подчиняет сначала Италию, а потом всё Средиземноморье."},
+{n:"Империя",y:"27 до н.э. — 476 н.э.",c:"#7b2d6b",d:"Вся власть у императора. Рим — столица огромного государства: здесь строят Колизей, термы и храмы."}
+];
+var E=[
+{p:0,x:410,y:385,i:"🐺",t:"Основание Рима",yr:"753 до н.э.",d:"По легенде, близнецов Ромула и Рема вскормила волчица. Выросшие братья основали город на Палатинском холме. Ромул стал первым царём и дал городу своё имя.",f:"День рождения Рима римляне отмечали 21 апреля. Этот праздник в Риме отмечают и сегодня."},
+{p:0,x:375,y:318,i:"💧",t:"Большая клоака",yr:"VI в. до н.э.",d:"Низину между холмами постоянно заливало водой. Римляне прорыли огромный канал для стока — Клоаку Максиму — и осушили болото. На этом месте вырос Римский форум: площадь для торговли, суда и собраний.",f:"Часть Большой клоаки работает до сих пор — ей больше двух с половиной тысяч лет."},
+{p:0,x:310,y:268,i:"👑",t:"Храм Юпитера и конец царей",yr:"VI в. до н.э. — 509 до н.э.",d:"Последний царь, Тарквиний Гордый, начал строить главный храм Рима на Капитолии. Но римляне восстали и изгнали его в 509 году до н.э. С этого момента Рим стал республикой — государством без царя.",f:"От слова «Капитолий» назван и Капитолий в Вашингтоне — здание американского Конгресса."},
+{p:1,x:375,y:318,i:"📜",t:"Сенат и Законы XII таблиц",yr:"451–450 до н.э.",d:"Римляне записали законы на двенадцати досках и выставили их на форуме. Теперь любой мог узнать, что разрешено, а что нет. Рядом заседал Сенат — совет старейших, который управлял республикой.",f:"Во времена Цицерона мальчики заучивали эти законы наизусть."},
+{p:1,x:300,y:485,i:"✊",t:"Плебеи требуют справедливости",yr:"V в. до н.э.",d:"Простые горожане — плебеи — жили беднее знати. Они не раз уходили из города и отказывались работать и воевать, пока им не дали защитников. Так появились народные трибуны.",f:"Трибун мог сказать «Запрещаю!» — по-латыни «вето» — и остановить несправедливое решение."},
+{p:1,x:470,y:205,i:"🦢",t:"Нашествие галлов",yr:"около 390 до н.э.",d:"Галлы разбили римское войско и ворвались в город. Римляне заперлись на Капитолии. По легенде, ночью священные гуси богини Юноны подняли крик и разбудили защитников, когда враги лезли на холм.",f:"После этого нашествия римляне построили новую мощную стену вокруг города."},
+{p:1,x:680,y:531,i:"🛣️",t:"Аппиева дорога",yr:"312 до н.э.",d:"Цензор Аппий Клавдий начал строить первую большую мощёную дорогу из Рима на юг. Её называли «царицей дорог». По ней шли войска, купцы и гонцы.",f:"Часть дороги сохранилась — по римским камням можно пройти и сегодня."},
+{p:1,x:430,y:468,i:"🐎",t:"Большой цирк",yr:"I в. до н.э.",d:"Здесь устраивали гонки на колесницах — любимое зрелище римлян. Юлий Цезарь расширил цирк, и он вмещал, по разным оценкам, до 150 тысяч зрителей.",f:"Цирк был в несколько раз больше Колизея."},
+{p:1,x:250,y:215,i:"🗡️",t:"Убийство Цезаря",yr:"15 марта 44 до н.э.",d:"Юлия Цезаря, ставшего диктатором, убили заговорщики-сенаторы прямо на заседании. Они хотели спасти республику, но после этого в Риме снова началась война.",f:"Историк Светоний насчитал 23 раны. Дату 15 марта римляне называли «мартовскими идами»."},
+{p:2,x:410,y:385,i:"🏛️",t:"Август — первый император",yr:"27 до н.э.",d:"Победив в войнах, Октавиан получил от Сената имя Август — «возвышенный». Республика формально осталась, но власть была у одного человека. Так началась империя. Август жил на Палатине.",f:"От названия Палатинского холма произошло слово «palace» — дворец — в английском и других языках."},
+{p:2,x:430,y:468,i:"🔥",t:"Великий пожар",yr:"64 н.э.",d:"Огонь вспыхнул возле Большого цирка и несколько дней бушевал в тесном деревянном городе. Большая часть Рима пострадала. Потом город отстроили заново: улицы стали шире, а дома — каменными.",f:"Что Нерон играл на лире и смотрел на пожар — скорее легенда: по словам Тацита, его в тот момент не было в Риме."},
+{p:2,x:515,y:345,i:"🏟️",t:"Открытие Колизея",yr:"80 н.э.",d:"Император Тит открыл гигантский амфитеатр, и игры шли около ста дней. Здесь проходили бои гладиаторов и звериные травли. Колизей вмещал около 50 тысяч зрителей.",f:"Над ареной натягивали огромный тканевый навес от солнца — его ставили моряки."},
+{p:2,x:395,y:250,i:"🗼",t:"Форум и колонна Траяна",yr:"112–113 н.э.",d:"При императоре Траяне империя стала самой большой. В честь побед над даками построили новый форум и колонну. Спираль рельефов на ней рассказывает о войне, как комикс.",f:"На колонне около 2500 фигур."},
+{p:2,x:300,y:170,i:"🏛️",t:"Пантеон",yr:"около 125 н.э.",d:"Храм «всех богов» построили при императоре Адриане. Его огромный купол сделан из бетона, а в центре — круглое отверстие, через которое падает свет.",f:"Диаметр купола — 43 метра. Это крупнейший в мире купол из неармированного бетона, и он стоит почти две тысячи лет."},
+{p:2,x:480,y:531,i:"🛁",t:"Термы Каракаллы",yr:"216 н.э.",d:"Термы — это общественные бани. Но не только: здесь были спортзалы, библиотеки, сады и места для встреч. Мыться и отдыхать одновременно могли тысячи людей.",f:"Вход стоил очень недорого, поэтому сюда ходил почти каждый житель Рима."},
+{p:2,x:770,y:300,i:"🧱",t:"Аврелианова стена",yr:"271–275 н.э.",d:"Враги подходили всё ближе, и император Аврелиан окружил Рим новой стеной длиной около 19 километров. Впервые за много веков городу понадобилась защита.",f:"Большая часть этой стены стоит до сих пор."},
+{p:2,x:375,y:318,i:"🏚️",t:"Конец Западной империи",yr:"476 н.э.",d:"Вождь германцев Одоакр сместил последнего императора и не стал назначать нового. Этот год считают концом Древнего Рима и началом Средних веков. Восточная часть империи — Византия — просуществовала ещё почти тысячу лет.",f:"Последнего императора звали Ромул Августул — «маленький Август». Так звали и основателя Рима, и первого императора!"}
+];
+var per=0,sel=null;
+var $=function(s){return document.querySelector(s)};
+function ids(){var r=[];E.forEach(function(e,i){if(e.p===per)r.push(i)});return r}
+function tabs(){
+  $("#tabs").innerHTML=P.map(function(p,i){
+    return '<button class="tab" role="tab" data-p="'+i+'" aria-selected="'+(i===per)+'" style="--tc:'+p.c+'"><b>'+p.n+'</b><span>'+p.y+'</span></button>';
+  }).join("");
+}
+function markers(){
+  $("#mk").innerHTML=E.map(function(e,i){
+    if(e.p!==per)return"";
+    return '<g class="mk'+(i===sel?' sel':'')+'" data-i="'+i+'" tabindex="0" role="button" aria-label="'+e.t+', '+e.yr+'" transform="translate('+e.x+','+e.y+')"><g class="in"><circle class="ring" r="24"/><circle class="bg" r="24"/><text y="8">'+e.i+'</text></g></g>';
+  }).join("");
+}
+function panel(){
+  var p=P[per],l=ids(),h;
+  if(sel===null){
+    h='<div class="ico">🗺️</div><h2>'+p.n+'</h2><span class="yr">'+p.y+'</span><p>'+p.d+'</p><p class="hint">Нажимай на значки на карте. Здесь событий: '+l.length+'.</p><div class="nav"><button class="btn pri" data-go="first">Начать с первого</button></div>';
+  }else{
+    var e=E[sel],k=l.indexOf(sel);
+    h='<div class="ico">'+e.i+'</div><h2>'+e.t+'</h2><span class="yr">'+e.yr+'</span><p>'+e.d+'</p><p class="fact"><b>Интересно:</b> '+e.f+'</p><div class="nav"><button class="btn" data-go="prev"'+(k===0?' disabled':'')+'>← Раньше</button><span class="cnt">'+(k+1)+' из '+l.length+'</span><button class="btn" data-go="next"'+(k===l.length-1?' disabled':'')+'>Позже →</button></div>';
+  }
+  $("#panel").innerHTML=h;
+}
+function draw(){
+  document.documentElement.style.setProperty("--pc",P[per].c);
+  $("#map").setAttribute("class","p"+per);
+  tabs();markers();panel();
+}
+function pick(i){sel=i;if(i!==null)per=E[i].p;draw()}
+document.addEventListener("click",function(ev){
+  var t=ev.target.closest("[data-p]");
+  if(t){per=+t.dataset.p;sel=null;draw();return}
+  var m=ev.target.closest(".mk");
+  if(m){pick(+m.dataset.i);return}
+  var g=ev.target.closest("[data-go]");
+  if(g){
+    var l=ids(),k=l.indexOf(sel),w=g.dataset.go;
+    pick(w==="first"?l[0]:w==="next"?l[k+1]:l[k-1]);
+  }
+});
+document.addEventListener("keydown",function(ev){
+  var m=ev.target.closest&&ev.target.closest(".mk");
+  if(m&&(ev.key==="Enter"||ev.key===" ")){ev.preventDefault();pick(+m.dataset.i)}
+});
+draw();
+</script>
+</body>
+</html>
